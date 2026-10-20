@@ -9,6 +9,7 @@ from pathlib import Path
 
 import joblib
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import mlflow
@@ -20,10 +21,22 @@ from mlflow.models import infer_signature
 from sklearn.base import clone
 from sklearn.ensemble import GradientBoostingClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import (ConfusionMatrixDisplay, RocCurveDisplay, accuracy_score,
-                             f1_score, precision_score, recall_score, roc_auc_score)
-from sklearn.model_selection import (GridSearchCV, RepeatedStratifiedKFold,
-                                     StratifiedKFold, cross_validate, train_test_split)
+from sklearn.metrics import (
+    ConfusionMatrixDisplay,
+    RocCurveDisplay,
+    accuracy_score,
+    f1_score,
+    precision_score,
+    recall_score,
+    roc_auc_score,
+)
+from sklearn.model_selection import (
+    GridSearchCV,
+    RepeatedStratifiedKFold,
+    StratifiedKFold,
+    cross_validate,
+    train_test_split,
+)
 
 from src.features import RAW_FEATURES, build_pipeline
 from src.preprocess import CLEAN_PATH, TARGET
@@ -63,8 +76,12 @@ def load_data():
 
 
 def log_model(model, X, registered_name=None):
-    kwargs = dict(serialization_format="cloudpickle", signature=infer_signature(X, model.predict(X)),
-                  input_example=X.head(3), registered_model_name=registered_name)
+    kwargs = dict(
+        serialization_format="cloudpickle",
+        signature=infer_signature(X, model.predict(X)),
+        input_example=X.head(3),
+        registered_model_name=registered_name,
+    )
     try:
         return mlflow.sklearn.log_model(model, name="model", **kwargs)
     except TypeError:  # older MLflow
@@ -78,14 +95,16 @@ def save_eval_plots(model, y_test, proba, pred, tag):
     ax.plot([0, 1], [0, 1], "k--", alpha=0.4)
     ax.set_title(f"ROC curve: {tag}")
     roc_path = PLOTS / f"roc_{tag}.png"
-    fig.savefig(roc_path, dpi=150, bbox_inches="tight"); plt.close(fig)
+    fig.savefig(roc_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
     fig, ax = plt.subplots(figsize=(4.5, 4))
     ConfusionMatrixDisplay.from_predictions(
         y_test, pred, display_labels=["No disease", "Disease"], ax=ax, colorbar=False)
     ax.set_title(f"Confusion matrix: {tag}")
     cm_path = PLOTS / f"cm_{tag}.png"
-    fig.savefig(cm_path, dpi=150, bbox_inches="tight"); plt.close(fig)
+    fig.savefig(cm_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
 
     paths = [roc_path, cm_path]
     est = model.named_steps["model"]
@@ -102,7 +121,8 @@ def save_eval_plots(model, y_test, proba, pred, tag):
         s.plot.barh(ax=ax, color="#4C72B0")
         ax.set_title(f"{label}: {tag}")
         fi_path = PLOTS / f"importance_{tag}.png"
-        fig.savefig(fi_path, dpi=150, bbox_inches="tight"); plt.close(fig)
+        fig.savefig(fi_path, dpi=150, bbox_inches="tight")
+        plt.close(fig)
         paths.append(fi_path)
     return paths
 
@@ -143,7 +163,8 @@ def run_experiment(name, engineered, X_train, X_test, y_train, y_test):
         mlflow.log_params({"model": name, "feature_set": feature_set, "seed": SEED,
                            "cv": "RepeatedStratifiedKFold(5x3)", "tuning": "GridSearchCV(5-fold)",
                            "test_size": 0.2, "scaler": "RobustScaler",
-                           **{k.replace("model__", "best_"): v for k, v in gs.best_params_.items()}})
+                           **{k.replace("model__", "best_"): v
+                              for k, v in gs.best_params_.items()}})
         mlflow.log_metrics({**cv_metrics, **test_metrics, "tuning_best_roc_auc": gs.best_score_})
         for p in save_eval_plots(best, y_test, proba, pred, tag):
             mlflow.log_artifact(str(p), artifact_path="plots")
@@ -181,8 +202,9 @@ def main():
     results = pd.DataFrame(rows).sort_values("cv_roc_auc_mean", ascending=False)
     PLOTS.mkdir(parents=True, exist_ok=True)
     results.to_csv(PLOTS / "model_comparison.csv", index=False)
-    print("\n", results[["run", "cv_roc_auc_mean", "cv_roc_auc_std", "cv_accuracy_mean",
-                         "cv_precision_mean", "cv_recall_mean", "test_roc_auc"]].round(3).to_string(index=False))
+    cols = ["run", "cv_roc_auc_mean", "cv_roc_auc_std", "cv_accuracy_mean",
+            "cv_precision_mean", "cv_recall_mean", "test_roc_auc"]
+    print("\n", results[cols].round(3).to_string(index=False))
 
     # final model: best by repeated-CV ROC-AUC, refit on ALL data for deployment
     top = results.iloc[0]
