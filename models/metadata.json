@@ -1,0 +1,27 @@
+{
+  "selected_run": "logistic_regression_baseline",
+  "model": "logistic_regression",
+  "feature_set": "baseline",
+  "best_params": {
+    "C": 0.1
+  },
+  "cv_roc_auc_mean": 0.9016831263208075,
+  "test_roc_auc": 0.9610389610389611,
+  "features": [
+    "age",
+    "trestbps",
+    "chol",
+    "thalach",
+    "oldpeak",
+    "ca",
+    "sex",
+    "fbs",
+    "exang",
+    "cp",
+    "restecg",
+    "slope",
+    "thal"
+  ],
+  "sklearn_version": "1.9.1",
+  "trained_on_rows": 303
+}
