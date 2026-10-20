@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: heart-api
+  labels:
+    app: heart-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: heart-api
+  template:
+    metadata:
+      labels:
+        app: heart-api
+    spec:
+      containers:
+        - name: heart-api
+          image: asia-south1-docker.pkg.dev/mlops-bits-aiml/heart-repo/heart-api:875d963
+          ports:
+            - containerPort: 8080
+          env:
+            - name: MODEL_PATH
+              value: models/heart_model.joblib
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
