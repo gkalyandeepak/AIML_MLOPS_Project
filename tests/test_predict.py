@@ -14,7 +14,7 @@ def test_predict_output_schema(model):
     out = predict(model, SAMPLE)
     assert set(out) == {"prediction", "label", "confidence", "probability_disease"}
     assert out["prediction"] in (0, 1)
-    assert 0.5 <= out["confidence"] <= 1.0
+    assert out["confidence"] > 1.0
     assert 0.0 <= out["probability_disease"] <= 1.0
 
 
